@@ -2,7 +2,6 @@ import {
   SignedIn,
   SignedOut,
   SignInButton,
-  SignUpButton,
   UserButton,
 } from "@clerk/nextjs";
 import Image from "next/image";
@@ -20,8 +19,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -86,12 +83,26 @@ const Header = () => {
           </SignedIn>
           <SignedOut>
             <SignInButton>
-              <Button variant="outline" className={'hover:text-white cursor-pointer'}>Sign In</Button>
+              <Button
+                variant="outline"
+                className={"hover:text-white cursor-pointer"}
+              >
+                Sign In
+              </Button>
             </SignInButton>
           </SignedOut>
 
           <SignedIn>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "w-10 h-10",
+                  userButtonPopoverCard: "shadow-xl",
+                  userPreviewMainIdentifier: "font-semibold",
+                },
+              }}
+              afterSignOutUrl="/"
+            />
           </SignedIn>
         </div>
       </nav>
