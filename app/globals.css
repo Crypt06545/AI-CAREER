@@ -199,3 +199,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+.grid-background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+
+  background-color: var(--background);
+
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    radial-gradient(circle at 30% 30%, color-mix(in oklch, var(--chart-1) 10%, transparent), transparent 40%),
+    radial-gradient(circle at 70% 70%, color-mix(in oklch, var(--chart-4) 10%, transparent), transparent 50%);
+
+  background-size: 50px 50px, 50px 50px, 100% 100%, 100% 100%;
+  background-blend-mode: screen;
+
+  animation: backgroundScroll 60s linear infinite;
+  filter: brightness(1.05) contrast(1.05);
+  opacity: 0.4;
+}

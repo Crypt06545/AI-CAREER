@@ -1,11 +1,12 @@
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import HeroSection from "@/components/HeroSection";
 
 export default function Home() {
   return (
-  <div>
-    This is div
-    <Button>CLick Me</Button>
-  </div>
+    <div>
+      <div className="grid-background" />
+      <main className="relative z-10">
+        <HeroSection/>
+      </main>
+    </div>
   );
 }

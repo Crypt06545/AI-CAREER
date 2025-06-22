@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import Header from "@/components/Header";
+import { dark } from "@clerk/themes";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -15,7 +16,11 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+      }}
+    >
       <html lang="en" suppressHydrationWarning>
         <body className={roboto.className} suppressHydrationWarning>
           <ThemeProvider
@@ -25,7 +30,7 @@ export default function RootLayout({ children }) {
             disableTransitionOnChange
           >
             {/* navbar  */}
-            <Header/>
+            <Header />
             <main>{children}</main>
           </ThemeProvider>
         </body>
