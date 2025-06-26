@@ -3,7 +3,6 @@
 import ConnectDB from "@/config/db/db";
 import userModel from "@/models/user-model";
 import { auth } from "@clerk/nextjs/server";
-// import { generateAIInsights } from "./dashboard";
 import { revalidatePath } from "next/cache";
 import industryInsightMode from "@/models/industryInsight-mode";
 
@@ -14,19 +13,20 @@ export async function updateUser(data) {
   try {
     await ConnectDB();
 
-    // 1. Find the user by clerkUserId
-    const user = await userModel.findOne({ clerkUserId: userId });
+    const { industry, bio, experience, skills } = data;
+
+    if (!industry || typeof industry !== "string") {
+      throw new Error("Invalid industry format");
+    }
+
+    const user = await userModel.findOne({ clerkUserId: userId }).lean();
     if (!user) throw new Error("User not found");
 
-    // 2. Check if industry insight exists
-    let industryInsight = await industryInsightMode.findOne({
-      industry: data.industry,
-    });
+    let industryInsight = await industryInsightMode.findOne({ industry }).lean();
 
-    // 3. If not, create it with default mock data
     if (!industryInsight) {
-      industryInsight = await industryInsightMode.create({
-        industry: data.industry,
+      const created = await industryInsightMode.create({
+        industry,
         salaryRanges: [],
         growthRate: 0,
         demandLevel: "Unknown",
@@ -36,28 +36,41 @@ export async function updateUser(data) {
         recommendedSkills: [],
         nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
+      industryInsight = created.toObject();
     }
 
-    // 4. Update the user
-    const updatedUser = await userModel.findByIdAndUpdate(
-      user._id,
-      {
-        industry: data.industry,
-        bio: data.bio,
-        experience: data.experience,
-        skills: data.skills,
-      },
-      { new: true }
-    );
+    const updatedUser = await userModel
+      .findByIdAndUpdate(
+        user._id,
+        { industry, bio, experience, skills },
+        { new: true }
+      )
+      .lean();
 
     revalidatePath("/");
 
-    return { updatedUser, industryInsight };
+    function convertDoc(doc) {
+      if (!doc) return null;
+      return {
+        ...doc,
+        _id: doc._id.toString(),
+        createdAt: doc.createdAt?.toISOString(),
+        updatedAt: doc.updatedAt?.toISOString(),
+        nextUpdate: doc.nextUpdate?.toISOString(),
+      };
+    }
+
+    return {
+      success: true,
+      updatedUser: convertDoc(updatedUser),
+      industryInsight: convertDoc(industryInsight),
+    };
   } catch (error) {
     console.error("Error updating user and industry:", error.message);
-    throw new Error("Failed to update profile");
+    throw new Error("Failed to update profile: " + error.message);
   }
 }
+
 
 export async function getUserOnboardingStatus() {
   const { userId } = await auth();
@@ -66,16 +79,14 @@ export async function getUserOnboardingStatus() {
   try {
     await ConnectDB();
 
-    // Find only the `industry` field for performance
-    const user = await userModel.findOne(
-      { clerkUserId: userId },
-      { industry: 1 } // only return industry
-    );
+    const user = await userModel
+      .findOne({ clerkUserId: userId }, { industry: 1 })
+      .lean();
 
     if (!user) throw new Error("User not found");
 
     return {
-      isOnboarded: !!user.industry, // true if industry is not empty
+      isOnboarded: !!user.industry,
     };
   } catch (error) {
     console.error("Error checking onboarding status:", error.message);

@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 const industryInsightSchema = new Schema(
   {
-    industry: { type: String, required: true, unique: true },
+    industry: { type: String, required: true },
     salaryRanges: [{ type: Schema.Types.Mixed }],
     growthRate: { type: Number },
     demandLevel: { type: String },
