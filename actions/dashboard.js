@@ -1,3 +1,4 @@
+import ConnectDB from "@/config/db/db";
 import industryInsightMode from "@/models/industryInsight-mode";
 import userModel from "@/models/user-model";
 import { auth } from "@clerk/nextjs/server";
@@ -38,27 +39,44 @@ export const generateAIInsights = async (industry) => {
 export async function getIndustryInsigts(params) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
+
   try {
     await ConnectDB();
 
-    const user = await userModel
-      .findOne({ clerkUserId: userId }, { industry: 1 })
+    const user = await userModel.findOne({ clerkUserId: userId }).lean();
+    if (!user) throw new Error("User not found");
+    if (!user.industry) throw new Error("User has no industry set");
+
+    // Check if insight already exists
+    let industryInsight = await industryInsightMode
+      .findOne({
+        industry: { $regex: new RegExp(`^${user.industry}$`, "i") },
+      })
       .lean();
 
-    if (!user) throw new Error("User not found");
-    if (!user.industryInsight) {
+    if (!industryInsight) {
       const insights = await generateAIInsights(user.industry);
-      const industryInsight = await industryInsightMode.create({
-        data: {
-          industry: user.industry,
-          ...insights,
-          nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
+
+      const createdInsight = await industryInsightMode.create({
+        industry: user.industry,
+        ...insights,
+        nextUpdate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
-      return industryInsight;
+
+      // Convert to plain object manually
+      industryInsight = createdInsight.toObject();
     }
-    return user.industryInsight;
+
+    // ✅ Convert all fields to plain JSON-safe values
+    return {
+      ...industryInsight,
+      _id: industryInsight._id?.toString(),
+      createdAt: industryInsight.createdAt?.toISOString(),
+      updatedAt: industryInsight.updatedAt?.toISOString(),
+      nextUpdate: industryInsight.nextUpdate?.toISOString(),
+    };
   } catch (error) {
-    console.log(error);
+    console.error("getIndustryInsigts Error:", error);
+    throw new Error("Failed to fetch industry insights");
   }
 }

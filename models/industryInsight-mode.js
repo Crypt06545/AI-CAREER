@@ -9,7 +9,7 @@ const industryInsightSchema = new Schema(
     marketOutlook: { type: String },
     keyTrends: [{ type: String }],
     recommendedSkills: [{ type: String }],
-    nextUpdate: { type: Date, required: true },
+    nextUpdate: { type: Date },
   },
   { timestamps: true }
 );
